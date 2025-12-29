@@ -20,6 +20,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Auto-run Alembic migrations on startup (idempotent)
+from alembic.config import Config as AlembicConfig
+from alembic import command as alembic_command
+import os
+
+@app.on_event("startup")
+def run_migrations() -> None:
+    try:
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        alembic_ini = os.path.join(base_dir, "alembic.ini")
+        cfg = AlembicConfig(alembic_ini)
+        # Override DB URL from settings
+        cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+        alembic_command.upgrade(cfg, "head")
+    except Exception:
+        # Avoid blocking app startup; errors will surface on API use
+        pass
+
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_PREFIX}/auth", tags=["Authentication"])
 app.include_router(items.router, prefix=f"{settings.API_PREFIX}/items", tags=["Items"])

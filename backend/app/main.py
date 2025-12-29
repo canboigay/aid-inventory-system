@@ -25,6 +25,10 @@ app.include_router(auth.router, prefix=f"{settings.API_PREFIX}/auth", tags=["Aut
 app.include_router(items.router, prefix=f"{settings.API_PREFIX}/items", tags=["Items"])
 app.include_router(quick_entry.router, prefix=f"{settings.API_PREFIX}/quick", tags=["Quick Entry"])
 
+# Serve frontend static files in production
+from app.static_files import mount_static_files
+mount_static_files(app)
+
 
 @app.get("/")
 def root():

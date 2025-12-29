@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app/main.py"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "postgresql://nsa_inventory_user:e8fSJsRjAPnwA4Y6yc6X7IP2sYUqCb4A@dpg-d58soo2li9vc73a91dtg-a.oregon-postgres.render.com/nsa_inventory",
+    "SECRET_KEY": "90a98e7795b8972828ce2d9a5f26ac2438633532518d482220b026908e637c52",
+    "DEBUG": "False"
+  }
+}

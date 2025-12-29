@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Users from './pages/Users';
+import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { authAPI } from './api/client';
 import type { User } from './types';
@@ -51,7 +52,9 @@ function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex gap-4 items-center">
               {user && (
                 <>
-                  <span className="text-sm text-gray-600">{user.username}</span>
+                  <Link to="/settings" className="text-sm text-gray-600 hover:text-gray-900">
+                    {user.full_name || user.username}
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="text-sm text-red-600 hover:text-red-800"
@@ -100,6 +103,14 @@ function App() {
           element={
             <PrivateRoute>
               <Users />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <Settings />
             </PrivateRoute>
           }
         />

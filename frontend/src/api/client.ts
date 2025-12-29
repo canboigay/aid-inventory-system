@@ -56,6 +56,11 @@ export const authAPI = {
     return response.data;
   },
 
+  register: async (data: { username: string; email: string; full_name: string; password: string; role: string }): Promise<User> => {
+    const response = await apiClient.post<User>('/auth/register', data);
+    return response.data;
+  },
+
   logout: () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -76,6 +81,11 @@ export const itemsAPI = {
 
   get: async (id: string): Promise<Item> => {
     const response = await apiClient.get<Item>(`/items/${id}`);
+    return response.data;
+  },
+
+  update: async (id: string, data: Partial<ItemCreate>): Promise<Item> => {
+    const response = await apiClient.patch<Item>(`/items/${id}`, data);
     return response.data;
   },
 

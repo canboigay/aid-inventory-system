@@ -24,10 +24,8 @@ export default function Users() {
 
   const loadUsers = async () => {
     try {
-      // For now, we'll just show the current user
-      // In production, you'd add a /users endpoint to list all users
-      const user = await authAPI.getCurrentUser();
-      setUsers([user]);
+      const usersList = await authAPI.listUsers();
+      setUsers(usersList);
     } catch (error) {
       console.error('Failed to load users:', error);
     } finally {

@@ -95,6 +95,23 @@ def get_current_user_info(current_user: User = Depends(get_current_active_user))
     return current_user
 
 
+@router.get("/users", response_model=list[UserResponse])
+def list_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """List all users (admin only)."""
+    # Check if current user is admin
+    if current_user.role != 'admin':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can list users"
+        )
+    
+    users = db.query(User).order_by(User.created_at.desc()).all()
+    return users
+
+
 @router.post("/change-password")
 def change_password(
     password_data: ChangePasswordRequest,

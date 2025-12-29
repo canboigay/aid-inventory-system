@@ -61,6 +61,11 @@ export const authAPI = {
     return response.data;
   },
 
+  listUsers: async (): Promise<User[]> => {
+    const response = await apiClient.get<User[]>('/auth/users');
+    return response.data;
+  },
+
   changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>('/auth/change-password', {
       current_password: currentPassword,

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: aid-inventory-backend
+    env: python
+    region: singapore
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aid-inventory-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: "3.11"
+
+databases:
+  - name: aid-inventory-db
+    databaseName: aid_inventory
+    user: aid_user
+    region: singapore

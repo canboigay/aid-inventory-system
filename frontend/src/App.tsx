@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react
 import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
+import Users from './pages/Users';
 import Login from './pages/Login';
 import { authAPI } from './api/client';
 import type { User } from './types';
@@ -41,6 +42,11 @@ function Layout({ children }: { children: React.ReactNode }) {
               <Link to="/inventory" className="text-gray-600 hover:text-gray-900">
                 Inventory
               </Link>
+              {user?.role === 'admin' && (
+                <Link to="/users" className="text-gray-600 hover:text-gray-900">
+                  Users
+                </Link>
+              )}
             </div>
             <div className="flex gap-4 items-center">
               {user && (
@@ -86,6 +92,14 @@ function App() {
           element={
             <PrivateRoute>
               <Inventory />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <PrivateRoute>
+              <Users />
             </PrivateRoute>
           }
         />

@@ -33,6 +33,11 @@ def list_kit_templates(
     current_user: User = Depends(get_current_active_user),
     include_inactive: bool = False
 ):
+    # Ensure table exists (safety in case migrations haven't run)
+    try:
+        KitTemplate.__table__.create(bind=db.get_bind(), checkfirst=True)
+    except Exception:
+        pass
     """List all kit templates."""
     query = db.query(KitTemplate)
     
@@ -77,6 +82,11 @@ def create_kit_template(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    # Ensure table exists (safety in case migrations haven't run)
+    try:
+        KitTemplate.__table__.create(bind=db.get_bind(), checkfirst=True)
+    except Exception:
+        pass
     """Create a new kit template with validation."""
     # Verify kit item exists and is category 'assembled_kit'
     kit_item = db.query(Item).filter(Item.id == template_data.kit_item_id).first()

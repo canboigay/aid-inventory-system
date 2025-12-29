@@ -107,7 +107,7 @@ class PurchaseResponse(BaseModel):
     id: uuid.UUID
     purchase_date: datetime
     supplier_name: Optional[str] = None
-    items_purchased: dict
+    items_purchased: List[dict]
     total_cost: Optional[Decimal] = None
     notes: Optional[str] = None
     created_at: datetime
@@ -121,7 +121,7 @@ class DistributionResponse(BaseModel):
     id: uuid.UUID
     distribution_date: datetime
     distribution_type: DistributionType
-    items_distributed: dict
+    items_distributed: List[dict]
     recipient_info: Optional[str] = None
     notes: Optional[str] = None
     created_at: datetime

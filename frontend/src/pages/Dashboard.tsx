@@ -134,27 +134,56 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Entry Buttons */}
+      {/* Quick Entry Cards */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Quick Entry</h2>
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Production Card */}
           <button
             onClick={() => setShowProductionForm(!showProductionForm)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
+            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 text-left group"
           >
-            Record Production
+            <div className="flex flex-col items-center text-center">
+              <div className="w-24 h-24 rounded-full bg-[#A8B968] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Record Production</h3>
+              <p className="text-sm text-gray-600">Log in-house manufactured items</p>
+            </div>
           </button>
+
+          {/* Purchase Card */}
           <button
             onClick={() => setShowPurchaseForm(!showPurchaseForm)}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-medium"
+            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 text-left group"
           >
-            Record Purchase
+            <div className="flex flex-col items-center text-center">
+              <div className="w-24 h-24 rounded-full bg-[#D9896C] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Record Purchase</h3>
+              <p className="text-sm text-gray-600">Log incoming supplies & bulk items</p>
+            </div>
           </button>
+
+          {/* Distribution Card */}
           <button
             onClick={() => setShowDistributionForm(!showDistributionForm)}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-medium"
+            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 text-left group"
           >
-            Record Distribution
+            <div className="flex flex-col items-center text-center">
+              <div className="w-24 h-24 rounded-full bg-[#5FA8A6] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Record Distribution</h3>
+              <p className="text-sm text-gray-600">Track outgoing aid packages</p>
+            </div>
           </button>
         </div>
       </div>
@@ -182,10 +211,10 @@ export default function Dashboard() {
               <textarea name="notes" className="w-full border rounded-lg p-2" rows={2}></textarea>
             </div>
             <div className="flex gap-2">
-              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+              <button type="submit" className="bg-[#A8B968] text-white px-4 py-2 rounded-lg hover:bg-[#96A55C] font-medium">
                 Submit
               </button>
-              <button type="button" onClick={() => setShowProductionForm(false)} className="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400">
+              <button type="button" onClick={() => setShowProductionForm(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
                 Cancel
               </button>
             </div>
@@ -225,10 +254,10 @@ export default function Dashboard() {
               <textarea name="notes" className="w-full border rounded-lg p-2" rows={2}></textarea>
             </div>
             <div className="flex gap-2">
-              <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+              <button type="submit" className="bg-[#D9896C] text-white px-4 py-2 rounded-lg hover:bg-[#C77A5F] font-medium">
                 Submit
               </button>
-              <button type="button" onClick={() => setShowPurchaseForm(false)} className="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400">
+              <button type="button" onClick={() => setShowPurchaseForm(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
                 Cancel
               </button>
             </div>
@@ -273,10 +302,10 @@ export default function Dashboard() {
               <textarea name="notes" className="w-full border rounded-lg p-2" rows={2}></textarea>
             </div>
             <div className="flex gap-2">
-              <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+              <button type="submit" className="bg-[#5FA8A6] text-white px-4 py-2 rounded-lg hover:bg-[#52918F] font-medium">
                 Submit
               </button>
-              <button type="button" onClick={() => setShowDistributionForm(false)} className="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400">
+              <button type="button" onClick={() => setShowDistributionForm(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
                 Cancel
               </button>
             </div>

@@ -45,8 +45,10 @@ export default function Inventory() {
     try {
       if (editingItem) {
         await itemsAPI.update(editingItem.id, itemData);
+        alert('Item updated successfully! ✓');
       } else {
         await itemsAPI.create(itemData);
+        alert('Item saved successfully! ✓');
       }
       setShowForm(false);
       setEditingItem(null);

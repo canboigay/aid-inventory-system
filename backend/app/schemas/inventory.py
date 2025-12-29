@@ -23,7 +23,7 @@ class ItemBase(BaseModel):
 
 class ItemCreate(ItemBase):
     """Schema for creating an item."""
-    pass
+    current_stock_level: Optional[Decimal] = None
 
 
 class ItemUpdate(BaseModel):

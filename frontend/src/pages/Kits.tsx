@@ -240,7 +240,7 @@ export default function Kits() {
                   >
                     <option value="">Select item...</option>
                     {items.filter(i => i.category !== 'assembled_kit').map(item => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
+                      <option key={item.id} value={item.id}>{item.name} - {item.category}</option>
                     ))}
                   </select>
                   <input

@@ -109,6 +109,11 @@ export default function Inventory() {
     return colors[category];
   };
 
+  const formatStock = (stock: any) => {
+    const num = Number(stock);
+    return Number.isInteger(num) ? num : num.toFixed(2);
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -341,7 +346,7 @@ export default function Inventory() {
                       </td>
                       <td className="p-4">
                         <span className={`font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-900'}`}>
-                          {item.current_stock_level}
+                          {formatStock(item.current_stock_level)}
                         </span>
                         {isLowStock && (
                           <span className="ml-2 text-xs text-red-600">⚠️ Low</span>
@@ -349,7 +354,7 @@ export default function Inventory() {
                       </td>
                       <td className="p-4 text-gray-600">{item.unit_of_measure}</td>
                       <td className="p-4 text-gray-600">
-                        {item.minimum_stock_level || '—'}
+                        {item.minimum_stock_level ? formatStock(item.minimum_stock_level) : '—'}
                       </td>
                       <td className="p-4">
                         <div className="flex justify-end gap-2">

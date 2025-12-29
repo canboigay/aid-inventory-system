@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react
 import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
+import Kits from './pages/Kits';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -42,6 +43,9 @@ function Layout({ children }: { children: React.ReactNode }) {
               </Link>
               <Link to="/inventory" className="text-gray-600 hover:text-gray-900">
                 Inventory
+              </Link>
+              <Link to="/kits" className="text-gray-600 hover:text-gray-900">
+                Kits
               </Link>
               {user?.role === 'admin' && (
                 <Link to="/users" className="text-gray-600 hover:text-gray-900">
@@ -95,6 +99,14 @@ function App() {
           element={
             <PrivateRoute>
               <Inventory />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/kits"
+          element={
+            <PrivateRoute>
+              <Kits />
             </PrivateRoute>
           }
         />

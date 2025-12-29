@@ -26,8 +26,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+      <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md">
         {/* Nation to Nation Branding */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5FA8A6] to-[#A8B968] bg-clip-text text-transparent mb-2">

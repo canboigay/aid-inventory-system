@@ -101,7 +101,7 @@ export default function Users() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">

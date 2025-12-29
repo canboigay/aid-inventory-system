@@ -19,13 +19,13 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         'kit_templates',
-        sa.Column('id', sa.dialects.postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column('id', sa.UUID(), primary_key=True, nullable=False),
         sa.Column('name', sa.String(length=255), nullable=False, unique=True),
         sa.Column('description', sa.Text(), nullable=True),
-        sa.Column('kit_item_id', sa.dialects.postgresql.UUID(as_uuid=True), sa.ForeignKey('items.id'), nullable=False),
+        sa.Column('kit_item_id', sa.UUID(), sa.ForeignKey('items.id'), nullable=False),
         sa.Column('components', sa.JSON(), nullable=False),
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default=sa.text('true')),
-        sa.Column('created_by_user_id', sa.dialects.postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id'), nullable=False),
+        sa.Column('created_by_user_id', sa.UUID(), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
     )

@@ -93,7 +93,7 @@ export default function Kits() {
     }
   };
 
-  const handleAssembleKit = async (e: React.FormEvent) => {
+  const handleAssembleKit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!selectedTemplate) return;

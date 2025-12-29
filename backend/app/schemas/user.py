@@ -60,3 +60,9 @@ class LoginRequest(BaseModel):
     """Login request schema."""
     username: str
     password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    """Change password request schema."""
+    current_password: str
+    new_password: str

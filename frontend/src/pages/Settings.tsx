@@ -41,9 +41,8 @@ export default function Settings() {
     }
 
     try {
-      // Note: You'll need to add a change password endpoint to the backend
-      // For now, this is a placeholder
-      alert('Password change functionality requires backend endpoint /auth/change-password');
+      await authAPI.changePassword(passwordData.currentPassword, passwordData.newPassword);
+      alert('Password changed successfully!');
       setShowPasswordForm(false);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
@@ -154,17 +153,6 @@ export default function Settings() {
             </div>
           ) : (
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <p className="text-sm text-yellow-800">
-                    Password change feature requires backend endpoint. Contact administrator to enable this feature.
-                  </p>
-                </div>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium mb-1">Current Password</label>
                 <input
@@ -173,7 +161,6 @@ export default function Settings() {
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                   required
                   className="w-full border rounded-lg p-2"
-                  disabled
                 />
               </div>
 
@@ -186,7 +173,6 @@ export default function Settings() {
                   required
                   minLength={6}
                   className="w-full border rounded-lg p-2"
-                  disabled
                 />
                 <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
               </div>
@@ -200,15 +186,13 @@ export default function Settings() {
                   required
                   minLength={6}
                   className="w-full border rounded-lg p-2"
-                  disabled
                 />
               </div>
 
               <div className="flex gap-2 pt-4">
                 <button
                   type="submit"
-                  disabled
-                  className="bg-gray-300 text-gray-500 px-6 py-2 rounded-lg font-medium cursor-not-allowed"
+                  className="bg-[#5FA8A6] text-white px-6 py-2 rounded-lg hover:bg-[#52918F] font-medium"
                 >
                   Update Password
                 </button>

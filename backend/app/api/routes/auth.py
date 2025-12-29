@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from app.db.session import get_db
 from app.db.models.user import User, RefreshToken
-from app.schemas.user import LoginRequest, Token, UserResponse, UserCreate
+from app.schemas.user import LoginRequest, Token, UserResponse, UserCreate, ChangePasswordRequest
 from app.core.security import verify_password, create_access_token, create_refresh_token, decode_token, get_password_hash
 from app.api.deps import get_current_active_user
 
@@ -82,3 +82,31 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 def get_current_user_info(current_user: User = Depends(get_current_active_user)):
     """Get current user information."""
     return current_user
+
+
+@router.post("/change-password")
+def change_password(
+    password_data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Change user password."""
+    # Verify current password
+    if not verify_password(password_data.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    # Validate new password
+    if len(password_data.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 6 characters long"
+        )
+    
+    # Update password
+    current_user.password_hash = get_password_hash(password_data.new_password)
+    db.commit()
+    
+    return {"message": "Password changed successfully"}

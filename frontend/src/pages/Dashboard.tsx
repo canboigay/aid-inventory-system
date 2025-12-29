@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { quickEntryAPI, itemsAPI } from '../api/client';
 import Walkthrough from '../components/Walkthrough';
-import DemoNotice from '../components/DemoNotice';
 import type {
   DashboardStats,
   Item,
@@ -144,12 +143,10 @@ export default function Dashboard() {
               Show Tutorial
             </button>
           </div>
-          <p className="text-gray-600">Track production, purchases, and distributions in real-time</p>
-        </div>
+        <p className="text-gray-600">Track production, purchases, and distributions in real-time</p>
+      </div>
 
-        <DemoNotice />
-
-        {/* Stats Grid */}
+      {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-3">

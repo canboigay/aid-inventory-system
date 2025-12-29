@@ -49,8 +49,19 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user."""
+def register(
+    user_data: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Register a new user (admin only)."""
+    # Check if current user is admin
+    if current_user.role != 'admin':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can create new users"
+        )
+    
     # Check if username or email already exists
     existing_user = db.query(User).filter(
         (User.username == user_data.username) | (User.email == user_data.email)

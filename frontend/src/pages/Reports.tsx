@@ -196,6 +196,51 @@ export default function Reports() {
               <div className="text-4xl font-bold text-gray-900">{report.summary.unique_users}</div>
             </div>
           </div>
+
+          {/* Recent Activity Timeline */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Recent Activity Timeline</h2>
+            {report.productions.length === 0 && report.purchases.length === 0 && report.distributions.length === 0 && report.assemblies.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No activity recorded</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="text-left p-3 font-semibold text-gray-700">Date & Time</th>
+                      <th className="text-left p-3 font-semibold text-gray-700">Type</th>
+                      <th className="text-left p-3 font-semibold text-gray-700">Item/Details</th>
+                      <th className="text-left p-3 font-semibold text-gray-700">Quantity</th>
+                      <th className="text-left p-3 font-semibold text-gray-700">User</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Combine all activities and sort by date */}
+                    {[
+                      ...report.productions.map(p => ({ ...p, type: 'Production', color: 'text-[#A8B968]' })),
+                      ...report.purchases.map(p => ({ ...p, type: 'Purchase', color: 'text-[#D9896C]', quantity: p.items.reduce((sum: number, i: any) => sum + i.quantity, 0) })),
+                      ...report.distributions.map(d => ({ ...d, type: 'Distribution', color: 'text-[#5FA8A6]', item_name: d.items.map((i: any) => i.item_name).join(', '), quantity: d.items.reduce((sum: number, i: any) => sum + i.quantity, 0) })),
+                      ...report.assemblies.map(a => ({ ...a, type: 'Assembly', color: 'text-gray-700', item_name: a.kit_name, quantity: a.quantity_assembled }))
+                    ]
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .slice(0, 20)
+                      .map((activity: any, idx) => (
+                        <tr key={idx} className="border-b hover:bg-gray-50">
+                          <td className="p-3 text-sm text-gray-600">{formatDate(activity.date)}</td>
+                          <td className="p-3">
+                            <span className={`font-medium ${activity.color}`}>{activity.type}</span>
+                          </td>
+                          <td className="p-3 text-sm">{activity.item_name || activity.supplier_name || 'N/A'}</td>
+                          <td className="p-3 text-sm font-semibold">{activity.quantity}</td>
+                          <td className="p-3 text-sm text-gray-600">{activity.user_name}</td>
+                        </tr>
+                      ))
+                    }
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -256,9 +301,9 @@ export default function Reports() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <div className="font-semibold text-lg">{getDistributionTypeLabel(dist.distribution_type)}</div>
-                        <div className="text-sm text-gray-600">{formatDate(dist.date)}</div>
+                        <div className="text-sm font-medium text-gray-700 mt-1">📅 {formatDate(dist.date)}</div>
                       </div>
-                      <div className="text-sm text-gray-600">By: {dist.user_name}</div>
+                      <div className="text-sm text-gray-600">👤 {dist.user_name}</div>
                     </div>
                     
                     <div className="mt-3">
@@ -306,8 +351,8 @@ export default function Reports() {
                         <div className="text-sm text-gray-600">Quantity: {prod.quantity}</div>
                       </div>
                       <div className="text-right text-sm">
-                        <div className="text-gray-600">{formatDate(prod.date)}</div>
-                        <div className="text-gray-500">By: {prod.user_name}</div>
+                        <div className="font-medium text-gray-700">📅 {formatDate(prod.date)}</div>
+                        <div className="text-gray-500">👤 {prod.user_name}</div>
                       </div>
                     </div>
                     {prod.notes && <div className="text-sm text-gray-600 mt-1 italic">{prod.notes}</div>}
@@ -334,8 +379,8 @@ export default function Reports() {
                         )}
                       </div>
                       <div className="text-right text-sm">
-                        <div className="text-gray-600">{formatDate(purch.date)}</div>
-                        <div className="text-gray-500">By: {purch.user_name}</div>
+                        <div className="font-medium text-gray-700">📅 {formatDate(purch.date)}</div>
+                        <div className="text-gray-500">👤 {purch.user_name}</div>
                       </div>
                     </div>
                     <div className="text-sm space-y-1">
@@ -366,8 +411,8 @@ export default function Reports() {
                         <div className="text-sm text-gray-600">Assembled: {asm.quantity_assembled} kits</div>
                       </div>
                       <div className="text-right text-sm">
-                        <div className="text-gray-600">{formatDate(asm.date)}</div>
-                        <div className="text-gray-500">By: {asm.user_name}</div>
+                        <div className="font-medium text-gray-700">📅 {formatDate(asm.date)}</div>
+                        <div className="text-gray-500">👤 {asm.user_name}</div>
                       </div>
                     </div>
                     <div className="text-sm space-y-1">

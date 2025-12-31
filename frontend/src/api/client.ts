@@ -105,6 +105,11 @@ export const itemsAPI = {
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/items/${id}`);
   },
+
+  adjust: async (id: string, delta: number, reason?: string): Promise<Item> => {
+    const response = await apiClient.post<Item>(`/items/${id}/adjust`, { delta, reason });
+    return response.data;
+  },
 };
 
 // Quick Entry API (for dashboard)

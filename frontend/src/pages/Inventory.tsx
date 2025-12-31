@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { itemsAPI } from '../api/client';
+import { itemsAPI, quickEntryAPI } from '../api/client';
 import type { Item, ItemCategory } from '../types';
 
 export default function Inventory() {
@@ -7,6 +7,8 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [addItem, setAddItem] = useState<Item | null>(null);
+  const [distributeItem, setDistributeItem] = useState<Item | null>(null);
   const [filterCategory, setFilterCategory] = useState<ItemCategory | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -80,6 +82,47 @@ export default function Inventory() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingItem(null);
+  };
+
+  // Add stock (adjust +delta)
+  const handleAddStock = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const qty = Number(formData.get('add_qty'));
+    const notes = (formData.get('add_notes') as string) || undefined;
+    if (!addItem) return;
+    try {
+      await itemsAPI.adjust(addItem.id, qty, notes);
+      alert(`Added ${qty} to ${addItem.name}`);
+      setAddItem(null);
+      loadItems();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to add stock');
+    }
+  };
+
+  // Distribute (subtract quantity via quick distribution)
+  const handleDistribute = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const qty = Number(formData.get('dist_qty'));
+    const dtype = formData.get('dist_type') as any;
+    const recipient = (formData.get('recipient') as string) || undefined;
+    const notes = (formData.get('dist_notes') as string) || undefined;
+    if (!distributeItem) return;
+    try {
+      await quickEntryAPI.distribution({
+        distribution_type: dtype,
+        items: [{ item_id: distributeItem.id, quantity: qty }],
+        recipient_info: recipient,
+        notes,
+      });
+      alert(`Distributed ${qty} ${distributeItem.unit_of_measure} of ${distributeItem.name}`);
+      setDistributeItem(null);
+      loadItems();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to distribute');
+    }
   };
 
   const filteredItems = items.filter(item => {
@@ -359,6 +402,24 @@ export default function Inventory() {
                       <td className="p-4">
                         <div className="flex justify-end gap-2">
                           <button
+                            onClick={() => setAddItem(item)}
+                            className="text-green-600 hover:text-green-700 p-2"
+                            title="Add stock"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setDistributeItem(item)}
+                            className="text-[#5FA8A6] hover:text-[#52918F] p-2"
+                            title="Distribute (subtract stock)"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                            </svg>
+                          </button>
+                          <button
                             onClick={() => handleEdit(item)}
                             className="text-[#5FA8A6] hover:text-[#52918F] p-2"
                             title="Edit item"
@@ -386,6 +447,69 @@ export default function Inventory() {
           </table>
         </div>
       </div>
+
+      {/* Add Stock Modal */}
+      {addItem && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Add Stock — {addItem.name}</h3>
+            <form onSubmit={handleAddStock} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Quantity to add</label>
+                <input name="add_qty" type="number" inputMode="numeric" min="1" step="1" required className="w-full border rounded-lg p-2" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+                <input name="add_notes" type="text" className="w-full border rounded-lg p-2" />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setAddItem(null)} className="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-lg">Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Distribute Modal */}
+      {distributeItem && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Distribute — {distributeItem.name}</h3>
+            <form onSubmit={handleDistribute} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Quantity</label>
+                  <input name="dist_qty" type="number" inputMode="numeric" min="1" step="1" required className="w-full border rounded-lg p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <select name="dist_type" className="w-full border rounded-lg p-2" required>
+                    <option value="weekly_package">Weekly Package</option>
+                    <option value="crisis_aid">Crisis Aid</option>
+                    <option value="school_delivery">School Delivery</option>
+                    <option value="boarding_home">Boarding Home</option>
+                    <option value="large_aid_drop">Large Aid Drop</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Recipient (optional)</label>
+                <input name="recipient" type="text" className="w-full border rounded-lg p-2" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+                <input name="dist_notes" type="text" className="w-full border rounded-lg p-2" />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setDistributeItem(null)} className="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-[#5FA8A6] text-white rounded-lg">Distribute</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Stats Summary */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">

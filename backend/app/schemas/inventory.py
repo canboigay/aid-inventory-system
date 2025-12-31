@@ -1,5 +1,5 @@
 """Inventory and operations schemas."""
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
@@ -85,6 +85,12 @@ class QuickDistributionEntry(BaseModel):
     recipient_info: Optional[str] = None
     distribution_date: Optional[datetime] = None
     notes: Optional[str] = None
+
+
+# Adjustment Schema
+class StockAdjustmentRequest(BaseModel):
+    delta: Decimal = Field(description="Positive to add, negative to subtract")
+    reason: Optional[str] = Field(default=None, max_length=200)
 
 
 # Response Schemas

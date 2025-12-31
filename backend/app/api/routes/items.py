@@ -2,13 +2,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from decimal import Decimal
 import uuid
 
 from app.db.session import get_db
 from app.db.models.user import User
 from app.db.models.item import Item, ItemCategory
-from app.schemas.inventory import ItemCreate, ItemUpdate, ItemResponse
+from app.schemas.inventory import ItemCreate, ItemUpdate, ItemResponse, StockAdjustmentRequest
 from app.api.deps import get_current_active_user
+from app.db.models.stock_movement import StockMovement, MovementType, ReferenceType
 
 router = APIRouter()
 
@@ -120,3 +122,43 @@ def delete_item(
     db.commit()
     
     return None
+
+
+@router.post("/{item_id}/adjust", response_model=ItemResponse)
+def adjust_stock(
+    item_id: uuid.UUID,
+    body: StockAdjustmentRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Adjust stock by delta (positive add, negative subtract).
+    Records a StockMovement of type ADJUSTMENT and prevents negative stock.
+    """
+    item = db.query(Item).filter(Item.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    if body.delta == 0:
+        raise HTTPException(status_code=400, detail="Delta must be non-zero")
+
+    new_level = Decimal(item.current_stock_level) + Decimal(body.delta)
+    if new_level < 0:
+        raise HTTPException(status_code=400, detail="Resulting stock would be negative")
+
+    # Apply adjustment
+    item.current_stock_level = new_level
+
+    movement = StockMovement(
+        item_id=item.id,
+        movement_type=MovementType.ADJUSTMENT,
+        quantity=abs(Decimal(body.delta)),
+        reference_type=ReferenceType.ADJUSTMENT,
+        reference_id=None,
+        user_id=current_user.id,
+        notes=body.reason or ("Manual adjustment +" + str(body.delta) if body.delta > 0 else "Manual adjustment " + str(body.delta))
+    )
+    db.add(movement)
+    db.commit()
+    db.refresh(item)
+
+    return item

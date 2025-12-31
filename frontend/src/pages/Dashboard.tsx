@@ -416,24 +416,54 @@ export default function Dashboard() {
       {/* Recent Activity */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <div className="space-y-2">
-          {stats?.recent_activity.length === 0 && (
-            <p className="text-gray-500">No recent activity</p>
+        <div className="overflow-x-auto">
+          {stats?.recent_activity?.length === 0 && (
+            <p className="text-gray-500 p-4">No recent activity</p>
           )}
-          {stats?.recent_activity.map((activity, index) => (
-            <div key={index} className="flex justify-between items-center py-2 border-b">
-              <div>
-                <span className="font-medium">{activity.item_name}</span>
-                <span className="text-gray-600 ml-2">
-                  {activity.movement_type === 'in' ? '+' : '-'}{activity.quantity}
-                </span>
-                <span className="text-sm text-gray-500 ml-2">({activity.type})</span>
-              </div>
-              <div className="text-sm text-gray-500">
-                {new Date(activity.timestamp).toLocaleString()}
-              </div>
-            </div>
-          ))}
+          {stats?.recent_activity && stats.recent_activity.length > 0 && (
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="text-left p-2 font-semibold text-gray-700">Item</th>
+                  <th className="text-left p-2 font-semibold text-gray-700">Type</th>
+                  <th className="text-center p-2 font-semibold text-gray-700">Qty</th>
+                  <th className="text-left p-2 font-semibold text-gray-700">User</th>
+                  <th className="text-left p-2 font-semibold text-gray-700">Recipient</th>
+                  <th className="text-left p-2 font-semibold text-gray-700">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.recent_activity.map((activity, index) => (
+                  <tr key={index} className="border-b hover:bg-gray-50">
+                    <td className="p-2 font-medium">{activity.item_name}</td>
+                    <td className="p-2">
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        activity.type === 'production' ? 'bg-[#A8B968]/20 text-[#A8B968]' :
+                        activity.type === 'purchase' ? 'bg-[#D9896C]/20 text-[#D9896C]' :
+                        activity.type === 'distribution' ? 'bg-[#5FA8A6]/20 text-[#5FA8A6]' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {activity.type}
+                      </span>
+                    </td>
+                    <td className="p-2 text-center font-semibold">
+                      {activity.movement_type === 'in' ? '+' : '-'}{activity.quantity}
+                    </td>
+                    <td className="p-2 text-gray-600">{(activity as any).user_name || 'N/A'}</td>
+                    <td className="p-2 text-gray-600">
+                      {activity.type === 'distribution' 
+                        ? ((activity as any).recipient_info || 'Not specified')
+                        : '—'
+                      }
+                    </td>
+                    <td className="p-2 text-gray-500 whitespace-nowrap">
+                      {new Date(activity.timestamp).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
         </div>
       </div>

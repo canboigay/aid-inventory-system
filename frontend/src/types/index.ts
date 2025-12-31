@@ -119,6 +119,8 @@ export interface RecentActivity {
   quantity: number;
   movement_type: string;
   timestamp: string;
+  user_name?: string;
+  recipient_info?: string;
 }
 
 // Reports Types

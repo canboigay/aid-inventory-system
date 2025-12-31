@@ -435,7 +435,12 @@ export default function Dashboard() {
               <tbody>
                 {stats.recent_activity.map((activity, index) => (
                   <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="p-2 font-medium">{activity.item_name}</td>
+                    <td className="p-2 font-medium">
+                      {activity.item_name}
+                      {(activity as any).notes && (
+                        <span className="ml-2 text-xs text-gray-500" title={(activity as any).notes}>📝</span>
+                      )}
+                    </td>
                     <td className="p-2">
                       <span className={`text-xs px-2 py-1 rounded ${
                         activity.type === 'production' ? 'bg-[#A8B968]/20 text-[#A8B968]' :

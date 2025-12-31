@@ -121,6 +121,7 @@ export interface RecentActivity {
   timestamp: string;
   user_name?: string;
   recipient_info?: string;
+  notes?: string;
 }
 
 // Reports Types

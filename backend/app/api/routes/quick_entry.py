@@ -241,12 +241,14 @@ def get_dashboard_stats(
         item = db.query(Item).filter(Item.id == movement.item_id).first()
         user = db.query(User).filter(User.id == movement.user_id).first()
         
-        # Get recipient info if this is a distribution
+        # Get recipient info and notes if this is a distribution
         recipient_info = None
+        notes = movement.notes
         if movement.reference_type == ReferenceType.DISTRIBUTION and movement.reference_id:
             distribution = db.query(Distribution).filter(Distribution.id == movement.reference_id).first()
             if distribution:
                 recipient_info = distribution.recipient_info
+                notes = distribution.notes or notes
         
         recent_activity.append({
             "type": movement.reference_type.value,
@@ -255,7 +257,8 @@ def get_dashboard_stats(
             "movement_type": movement.movement_type.value,
             "timestamp": movement.created_at.isoformat(),
             "user_name": user.full_name if user else "Unknown",
-            "recipient_info": recipient_info
+            "recipient_info": recipient_info,
+            "notes": notes
         })
     
     return DashboardStats(

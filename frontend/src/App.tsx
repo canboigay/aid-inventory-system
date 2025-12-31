@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Kits from './pages/Kits';
+import Reports from './pages/Reports';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -52,6 +53,9 @@ function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
                 <Link to="/kits" className="text-gray-600 hover:text-gray-900">
                   Kits
+                </Link>
+                <Link to="/reports" className="text-gray-600 hover:text-gray-900">
+                  Reports
                 </Link>
                 {user?.role === 'admin' && (
                   <Link to="/users" className="text-gray-600 hover:text-gray-900">
@@ -118,6 +122,13 @@ function Layout({ children }: { children: React.ReactNode }) {
               >
                 Kits
               </Link>
+              <Link
+                to="/reports"
+                onClick={closeMobileMenu}
+                className="block py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-2 rounded"
+              >
+                Reports
+              </Link>
               {user?.role === 'admin' && (
                 <Link
                   to="/users"
@@ -182,6 +193,14 @@ function App() {
           element={
             <PrivateRoute>
               <Kits />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <PrivateRoute>
+              <Reports />
             </PrivateRoute>
           }
         />

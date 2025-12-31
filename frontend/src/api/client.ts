@@ -132,4 +132,14 @@ export const quickEntryAPI = {
   },
 };
 
+// Reports API
+import type { ComprehensiveReport } from '../types';
+
+export const reportsAPI = {
+  getActivityReport: async (period: 'day' | 'week' | 'month'): Promise<ComprehensiveReport> => {
+    const response = await apiClient.get<ComprehensiveReport>(`/reports/activity?period=${period}`);
+    return response.data;
+  },
+};
+
 export default apiClient;

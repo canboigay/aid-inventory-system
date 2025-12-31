@@ -93,10 +93,11 @@ export default function Inventory() {
     if (!addItem) return;
     try {
       await itemsAPI.adjust(addItem.id, qty, notes);
-      alert(`Added ${qty} to ${addItem.name}`);
       setAddItem(null);
-      loadItems();
+      await loadItems();
+      alert(`✓ Successfully added ${qty} to ${addItem.name}`);
     } catch (err: any) {
+      console.error('Add stock error:', err);
       alert(err.response?.data?.detail || 'Failed to add stock');
     }
   };
@@ -117,10 +118,11 @@ export default function Inventory() {
         recipient_info: recipient,
         notes,
       });
-      alert(`Distributed ${qty} ${distributeItem.unit_of_measure} of ${distributeItem.name}`);
       setDistributeItem(null);
-      loadItems();
+      await loadItems();
+      alert(`✓ Successfully distributed ${qty} ${distributeItem.unit_of_measure} of ${distributeItem.name}`);
     } catch (err: any) {
+      console.error('Distribution error:', err);
       alert(err.response?.data?.detail || 'Failed to distribute');
     }
   };

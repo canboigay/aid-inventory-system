@@ -119,3 +119,73 @@ export interface RecentActivity {
   movement_type: string;
   timestamp: string;
 }
+
+// Reports Types
+export interface ActivitySummary {
+  period: string;
+  date_from: string;
+  date_to: string;
+  total_productions: number;
+  total_purchases: number;
+  total_distributions: number;
+  total_assemblies: number;
+  total_items_distributed: number;
+  unique_users: number;
+}
+
+export interface UserActivity {
+  user_name: string;
+  productions_count: number;
+  purchases_count: number;
+  distributions_count: number;
+  assemblies_count: number;
+  total_entries: number;
+}
+
+export interface ProductionSummary {
+  id: string;
+  date: string;
+  item_name: string;
+  quantity: number;
+  user_name: string;
+  notes?: string;
+}
+
+export interface PurchaseSummary {
+  id: string;
+  date: string;
+  supplier_name?: string;
+  items: any[];
+  total_cost?: number;
+  user_name: string;
+  notes?: string;
+}
+
+export interface DistributionSummary {
+  id: string;
+  date: string;
+  distribution_type: string;
+  items: any[];
+  recipient_info?: string;
+  user_name: string;
+  notes?: string;
+}
+
+export interface AssemblySummary {
+  id: string;
+  date: string;
+  kit_name: string;
+  quantity_assembled: number;
+  components: any[];
+  user_name: string;
+  notes?: string;
+}
+
+export interface ComprehensiveReport {
+  summary: ActivitySummary;
+  user_activities: UserActivity[];
+  productions: ProductionSummary[];
+  purchases: PurchaseSummary[];
+  distributions: DistributionSummary[];
+  assemblies: AssemblySummary[];
+}

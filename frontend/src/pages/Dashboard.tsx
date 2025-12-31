@@ -23,6 +23,12 @@ export default function Dashboard() {
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [showDistributionForm, setShowDistributionForm] = useState(false);
 
+  // Quick Actions dropdown state
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickDistOpen, setQuickDistOpen] = useState(false);
+  const [quickItemId, setQuickItemId] = useState<string>('');
+
   useEffect(() => {
     loadData();
   }, []);
@@ -54,11 +60,12 @@ export default function Dashboard() {
     try {
       await quickEntryAPI.production(data);
       setShowProductionForm(false);
-      loadData();
       e.currentTarget.reset();
-    } catch (error) {
+      await loadData();
+      alert('✓ Production recorded successfully');
+    } catch (error: any) {
       console.error('Failed to record production:', error);
-      alert('Failed to record production. Please try again.');
+      alert(error.response?.data?.detail || 'Failed to record production. Please try again.');
     }
   };
 
@@ -78,11 +85,12 @@ export default function Dashboard() {
     try {
       await quickEntryAPI.purchase(data);
       setShowPurchaseForm(false);
-      loadData();
       e.currentTarget.reset();
-    } catch (error) {
+      await loadData();
+      alert('✓ Purchase recorded successfully');
+    } catch (error: any) {
       console.error('Failed to record purchase:', error);
-      alert('Failed to record purchase. Please try again.');
+      alert(error.response?.data?.detail || 'Failed to record purchase. Please try again.');
     }
   };
 
@@ -102,8 +110,9 @@ export default function Dashboard() {
     try {
       await quickEntryAPI.distribution(data);
       setShowDistributionForm(false);
-      loadData();
       e.currentTarget.reset();
+      await loadData();
+      alert('✓ Distribution recorded successfully');
     } catch (error: any) {
       console.error('Failed to record distribution:', error);
       alert(error.response?.data?.detail || 'Failed to record distribution. Please try again.');
@@ -133,15 +142,41 @@ export default function Dashboard() {
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Dashboard</h1>
-            <button
-              onClick={() => setShowWalkthrough(true)}
-              className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Show Tutorial
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setQuickMenuOpen(!quickMenuOpen)}
+                className="text-sm bg-white border rounded-lg px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2"
+                aria-haspopup="menu"
+                aria-expanded={quickMenuOpen}
+              >
+                Quick Actions
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {quickMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow z-10">
+                  <button
+                    onClick={() => { setQuickMenuOpen(false); setQuickAddOpen(true); }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+                  >
+                    Add Stock
+                  </button>
+                  <button
+                    onClick={() => { setQuickMenuOpen(false); setQuickDistOpen(true); }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+                  >
+                    Distribute Item
+                  </button>
+                  <button
+                    onClick={() => { setQuickMenuOpen(false); setShowWalkthrough(true); }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+                  >
+                    Show Tutorial
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         <p className="text-gray-600">Track production, purchases, and distributions in real-time</p>
       </div>
@@ -402,6 +437,134 @@ export default function Dashboard() {
         </div>
         </div>
       </div>
+
+      {/* Quick Add Stock Modal */}
+      {quickAddOpen && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Add Stock</h3>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const formData = new FormData(form);
+                const qty = Number(formData.get('add_qty'));
+                const notes = (formData.get('add_notes') as string) || undefined;
+                try {
+                  if (!quickItemId) throw new Error('Select an item');
+                  await itemsAPI.adjust(quickItemId, qty, notes);
+                  setQuickAddOpen(false);
+                  setQuickItemId('');
+                  await loadData();
+                  alert('✓ Stock added successfully');
+                } catch (err: any) {
+                  console.error('Quick add stock error:', err);
+                  alert(err.response?.data?.detail || err.message || 'Failed to add stock');
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium mb-1">Item</label>
+                <select required className="w-full border rounded-lg p-2" value={quickItemId} onChange={(e)=>setQuickItemId(e.target.value)}>
+                  <option value="">Select item...</option>
+                  {items.map(i => (
+                    <option key={i.id} value={i.id}>{i.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Quantity to add</label>
+                <input name="add_qty" type="number" inputMode="numeric" min="1" step="1" required className="w-full border rounded-lg p-2" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+                <input name="add_notes" type="text" className="w-full border rounded-lg p-2" />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={()=>{setQuickAddOpen(false); setQuickItemId('');}} className="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-lg">Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Distribute Modal */}
+      {quickDistOpen && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Distribute Item</h3>
+            <form
+              onSubmit={async (e)=>{
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const fd = new FormData(form);
+                const qty = Number(fd.get('dist_qty'));
+                const dtype = fd.get('dist_type') as any;
+                const recipient = (fd.get('recipient') as string) || undefined;
+                const notes = (fd.get('dist_notes') as string) || undefined;
+                try {
+                  if (!quickItemId) throw new Error('Select an item');
+                  await quickEntryAPI.distribution({
+                    distribution_type: dtype,
+                    items: [{ item_id: quickItemId, quantity: qty }],
+                    recipient_info: recipient,
+                    notes,
+                  });
+                  setQuickDistOpen(false);
+                  setQuickItemId('');
+                  await loadData();
+                  alert('✓ Distribution recorded successfully');
+                } catch (err: any) {
+                  console.error('Quick distribute error:', err);
+                  alert(err.response?.data?.detail || err.message || 'Failed to distribute');
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium mb-1">Item</label>
+                <select required className="w-full border rounded-lg p-2" value={quickItemId} onChange={(e)=>setQuickItemId(e.target.value)}>
+                  <option value="">Select item...</option>
+                  {items.map(i => (
+                    <option key={i.id} value={i.id}>{i.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Quantity</label>
+                  <input name="dist_qty" type="number" inputMode="numeric" min="1" step="1" required className="w-full border rounded-lg p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <select name="dist_type" className="w-full border rounded-lg p-2" required>
+                    <option value="weekly_package">Weekly Package</option>
+                    <option value="crisis_aid">Crisis Aid</option>
+                    <option value="school_delivery">School Delivery</option>
+                    <option value="boarding_home">Boarding Home</option>
+                    <option value="large_aid_drop">Large Aid Drop</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Recipient (optional)</label>
+                <input name="recipient" type="text" className="w-full border rounded-lg p-2" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+                <input name="dist_notes" type="text" className="w-full border rounded-lg p-2" />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={()=>{setQuickDistOpen(false); setQuickItemId('');}} className="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-[#5FA8A6] text-white rounded-lg">Distribute</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

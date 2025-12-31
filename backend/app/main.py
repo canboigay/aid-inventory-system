@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.routes import auth, items, quick_entry, kit_assembly
+from app.api.routes import auth, items, quick_entry, kit_assembly, reports
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -43,6 +43,7 @@ app.include_router(auth.router, prefix=f"{settings.API_PREFIX}/auth", tags=["Aut
 app.include_router(items.router, prefix=f"{settings.API_PREFIX}/items", tags=["Items"])
 app.include_router(kit_assembly.router, prefix=f"{settings.API_PREFIX}/kits", tags=["Kit Assembly"])
 app.include_router(quick_entry.router, prefix=f"{settings.API_PREFIX}/quick", tags=["Quick Entry"])
+app.include_router(reports.router, prefix=f"{settings.API_PREFIX}/reports", tags=["Reports"])
 
 # Serve frontend static files in production
 from app.static_files import mount_static_files

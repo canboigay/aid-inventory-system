@@ -140,6 +140,12 @@ export const reportsAPI = {
     const response = await apiClient.get<ComprehensiveReport>(`/reports/activity?period=${period}`);
     return response.data;
   },
+  getActivityReportCustom: async (startDate: string, endDate: string): Promise<ComprehensiveReport> => {
+    const response = await apiClient.get<ComprehensiveReport>(
+      `/reports/activity?start_date=${startDate}T00:00:00Z&end_date=${endDate}T23:59:59Z`
+    );
+    return response.data;
+  },
 };
 
 export default apiClient;

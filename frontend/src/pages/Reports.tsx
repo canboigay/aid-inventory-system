@@ -5,8 +5,11 @@ import type { ComprehensiveReport } from '../types';
 export default function Reports() {
   const [report, setReport] = useState<ComprehensiveReport | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'custom'>('week');
   const [activeTab, setActiveTab] = useState<'summary' | 'users' | 'distributions' | 'details'>('summary');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     loadReport();
@@ -15,7 +18,12 @@ export default function Reports() {
   const loadReport = async () => {
     setLoading(true);
     try {
-      const data = await reportsAPI.getActivityReport(period);
+      let data;
+      if (period === 'custom' && startDate && endDate) {
+        data = await reportsAPI.getActivityReportCustom(startDate, endDate);
+      } else {
+        data = await reportsAPI.getActivityReport(period === 'custom' ? 'week' : period);
+      }
       setReport(data);
     } catch (error) {
       console.error('Failed to load report:', error);
@@ -23,6 +31,20 @@ export default function Reports() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCustomDateRange = () => {
+    if (!startDate || !endDate) {
+      alert('Please select both start and end dates');
+      return;
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      alert('Start date must be before end date');
+      return;
+    }
+    setPeriod('custom');
+    setShowDatePicker(false);
+    loadReport();
   };
 
   const formatDate = (date: string) => {
@@ -83,7 +105,7 @@ export default function Reports() {
               {formatDateShort(report.summary.date_from)} - {formatDateShort(report.summary.date_to)}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setPeriod('day')}
               className={`px-4 py-2 rounded-lg font-medium ${
@@ -92,7 +114,7 @@ export default function Reports() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Daily
+              Today
             </button>
             <button
               onClick={() => setPeriod('week')}
@@ -102,7 +124,7 @@ export default function Reports() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Weekly
+              Last 7 Days
             </button>
             <button
               onClick={() => setPeriod('month')}
@@ -112,10 +134,67 @@ export default function Reports() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Monthly
+              Last 30 Days
+            </button>
+            <button
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                period === 'custom'
+                  ? 'bg-[#5FA8A6] text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              📅 Custom Range
             </button>
           </div>
         </div>
+
+        {/* Custom Date Picker */}
+        {showDatePicker && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-4 border-2 border-[#5FA8A6]">
+            <h3 className="font-semibold mb-3">Select Date Range</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+              <div>
+                <label className="block text-sm font-medium mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCustomDateRange}
+                  className="px-4 py-2 bg-[#5FA8A6] text-white rounded-lg hover:bg-[#52918F] font-medium"
+                >
+                  Apply
+                </button>
+                <button
+                  onClick={() => setShowDatePicker(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+            {period === 'custom' && startDate && endDate && (
+              <div className="mt-3 text-sm text-gray-600">
+                Showing: {new Date(startDate).toLocaleDateString()} - {new Date(endDate).toLocaleDateString()}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-2 border-b mb-6">

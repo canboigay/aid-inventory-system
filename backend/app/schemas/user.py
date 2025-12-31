@@ -60,6 +60,7 @@ class LoginRequest(BaseModel):
     """Login request schema."""
     username: str
     password: str
+    remember_me: Optional[bool] = False
 
 
 class ChangePasswordRequest(BaseModel):

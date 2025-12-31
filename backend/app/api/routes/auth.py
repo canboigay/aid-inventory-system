@@ -29,15 +29,24 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             detail="Inactive user"
         )
     
-    # Create tokens
-    access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token_str = create_refresh_token(data={"sub": str(user.id)})
+    # Create tokens with extended expiry if remember_me is checked
+    token_expire_days = 30 if login_data.remember_me else 7
+    access_token_expire_minutes = 60 * 24 * token_expire_days if login_data.remember_me else 30
+    
+    access_token = create_access_token(
+        data={"sub": str(user.id)},
+        expires_delta=timedelta(minutes=access_token_expire_minutes)
+    )
+    refresh_token_str = create_refresh_token(
+        data={"sub": str(user.id)},
+        expires_delta=timedelta(days=token_expire_days)
+    )
     
     # Store refresh token in database
     refresh_token = RefreshToken(
         user_id=user.id,
         token=refresh_token_str,
-        expires_at=datetime.utcnow() + timedelta(days=7)
+        expires_at=datetime.utcnow() + timedelta(days=token_expire_days)
     )
     db.add(refresh_token)
     db.commit()

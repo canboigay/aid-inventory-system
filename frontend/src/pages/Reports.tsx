@@ -290,6 +290,7 @@ export default function Reports() {
                       <th className="text-left p-3 font-semibold text-gray-700">Type</th>
                       <th className="text-left p-3 font-semibold text-gray-700">Item/Details</th>
                       <th className="text-left p-3 font-semibold text-gray-700">Quantity</th>
+                      <th className="text-left p-3 font-semibold text-gray-700">Recipient</th>
                       <th className="text-left p-3 font-semibold text-gray-700">User</th>
                     </tr>
                   </thead>
@@ -311,6 +312,9 @@ export default function Reports() {
                           </td>
                           <td className="p-3 text-sm">{activity.item_name || activity.supplier_name || 'N/A'}</td>
                           <td className="p-3 text-sm font-semibold">{activity.quantity}</td>
+                          <td className="p-3 text-sm text-gray-600">
+                            {activity.recipient_info || (activity.type === 'Distribution' ? 'Not specified' : '—')}
+                          </td>
                           <td className="p-3 text-sm text-gray-600">{activity.user_name}</td>
                         </tr>
                       ))

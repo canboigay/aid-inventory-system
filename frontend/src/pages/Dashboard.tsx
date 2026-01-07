@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { quickEntryAPI, itemsAPI } from '../api/client';
+import { quickEntryAPI, itemsAPI, recipientsAPI } from '../api/client';
 import Walkthrough from '../components/Walkthrough';
 import type {
   DashboardStats,
@@ -13,6 +13,7 @@ import type {
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [items, setItems] = useState<Item[]>([]);
+  const [recipients, setRecipients] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWalkthrough, setShowWalkthrough] = useState(() => {
     return !localStorage.getItem('walkthroughCompleted');
@@ -35,12 +36,14 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [statsData, itemsData] = await Promise.all([
+      const [statsData, itemsData, recipientsData] = await Promise.all([
         quickEntryAPI.getDashboardStats(),
         itemsAPI.list(),
+        recipientsAPI.list(),
       ]);
       setStats(statsData);
       setItems(itemsData);
+      setRecipients(recipientsData.map(r => ({ id: r.id, name: r.name })));
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -97,14 +100,23 @@ export default function Dashboard() {
   const handleDistributionSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+
+    const recipientId = (formData.get('recipient_id') as string) || '';
+    const recipientFreeText = (formData.get('recipient_info') as string) || '';
+    const selectedRecipientName = recipientId
+      ? recipients.find(r => r.id === recipientId)?.name
+      : undefined;
+
+    const recipientInfo = recipientFreeText.trim() || selectedRecipientName;
+
     const data: QuickDistributionEntry = {
       distribution_type: formData.get('distribution_type') as DistributionType,
       items: [{
         item_id: formData.get('item_id') as string,
         quantity: Number(formData.get('quantity')),
       }],
-      recipient_info: formData.get('recipient_info') as string || undefined,
-      notes: formData.get('notes') as string || undefined,
+      recipient_info: recipientInfo || undefined,
+      notes: (formData.get('notes') as string) || undefined,
     };
 
     try {
@@ -372,11 +384,11 @@ export default function Dashboard() {
             <div>
               <label className="block text-sm font-medium mb-1">Distribution Type</label>
               <select name="distribution_type" required className="w-full border rounded-lg p-2">
-                <option value="weekly_package">Weekly Package</option>
+                <option value="weekly">Weekly</option>
+                <option value="bi_weekly">Bi-weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="bi_monthly">Bi-monthly</option>
                 <option value="crisis_aid">Crisis Aid</option>
-                <option value="school_delivery">School Delivery</option>
-                <option value="boarding_home">Boarding Home</option>
-                <option value="large_aid_drop">Large Aid Drop</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -394,8 +406,19 @@ export default function Dashboard() {
               <input type="number" name="quantity" required min="0" step="0.01" className="w-full border rounded-lg p-2" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Recipient Info (optional)</label>
-              <input type="text" name="recipient_info" placeholder="Location, organization, etc." className="w-full border rounded-lg p-2" />
+              <label className="block text-sm font-medium mb-1">Recipient (optional)</label>
+              <select name="recipient_id" className="w-full border rounded-lg p-2">
+                <option value="">Select recipient...</option>
+                {recipients.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                name="recipient_info"
+                placeholder="Or type a new recipient..."
+                className="w-full border rounded-lg p-2 mt-2"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Notes (optional)</label>
@@ -437,8 +460,13 @@ export default function Dashboard() {
                   <tr key={index} className="border-b hover:bg-gray-50">
                     <td className="p-2 font-medium">
                       {activity.item_name}
-                      {(activity as any).notes && (
-                        <span className="ml-2 text-xs text-gray-500" title={(activity as any).notes}>📝</span>
+      {(activity as any).notes && (
+                        <span className="ml-2 text-xs text-gray-500" title={(activity as any).notes}>
+                          <svg className="inline h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20h9" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                        </span>
                       )}
                     </td>
                     <td className="p-2">
@@ -575,11 +603,11 @@ export default function Dashboard() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Type</label>
                   <select name="dist_type" className="w-full border rounded-lg p-2" required>
-                    <option value="weekly_package">Weekly Package</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="bi_weekly">Bi-weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="bi_monthly">Bi-monthly</option>
                     <option value="crisis_aid">Crisis Aid</option>
-                    <option value="school_delivery">School Delivery</option>
-                    <option value="boarding_home">Boarding Home</option>
-                    <option value="large_aid_drop">Large Aid Drop</option>
                     <option value="other">Other</option>
                   </select>
                 </div>

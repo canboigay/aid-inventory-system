@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { authAPI } from '../api/client';
+import { useToast } from '../components/ToastProvider';
 import type { User, UserRole } from '../types';
 
 export default function Users() {
+  const { pushToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [resetPwUser, setResetPwUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -36,7 +40,7 @@ export default function Users() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     const userData = {
       username: formData.get('username') as string,
       email: formData.get('email') as string,
@@ -50,18 +54,24 @@ export default function Users() {
       setShowForm(false);
       setUsers([...users, newUser]);
       e.currentTarget.reset();
+      pushToast({ variant: 'success', title: 'User created' });
     } catch (error: any) {
       console.error('Failed to create user:', error);
-      alert(error.response?.data?.detail || 'Failed to create user. Please try again.');
+      pushToast({
+        variant: 'error',
+        title: 'Failed to create user',
+        message: error.response?.data?.detail || 'Please try again.',
+      });
     }
   };
 
   const getRoleLabel = (role: UserRole) => {
     const labels: Record<UserRole, string> = {
       admin: 'Admin',
-      warehouse_staff: 'Warehouse Staff',
-      production_staff: 'Production Staff',
-      distribution_coordinator: 'Distribution Coordinator',
+      warehouse_manager: 'Warehouse Manager',
+      outreach_coordinator: 'Outreach Coordinator',
+      in_house_production_coordinator: 'In-House Production Coordinator',
+      product_purchaser: 'Product Purchaser',
     };
     return labels[role];
   };
@@ -69,14 +79,77 @@ export default function Users() {
   const getRoleColor = (role: UserRole) => {
     const colors: Record<UserRole, string> = {
       admin: 'bg-purple-100 text-purple-800',
-      warehouse_staff: 'bg-blue-100 text-blue-800',
-      production_staff: 'bg-[#A8B968]/20 text-[#A8B968]',
-      distribution_coordinator: 'bg-[#5FA8A6]/20 text-[#5FA8A6]',
+      warehouse_manager: 'bg-blue-100 text-blue-800',
+      outreach_coordinator: 'bg-[#5FA8A6]/20 text-[#5FA8A6]',
+      in_house_production_coordinator: 'bg-[#A8B968]/20 text-[#A8B968]',
+      product_purchaser: 'bg-[#D9896C]/20 text-[#D9896C]',
     };
     return colors[role];
   };
 
   const isAdmin = currentUser?.role === 'admin';
+
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    const formData = new FormData(e.currentTarget);
+    const payload = {
+      email: (formData.get('email') as string) || undefined,
+      full_name: (formData.get('full_name') as string) || undefined,
+      role: (formData.get('role') as string) || undefined,
+      is_active: formData.get('is_active') === 'on',
+    };
+
+    try {
+      const updated = await authAPI.updateUser(editingUser.id, payload);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      setEditingUser(null);
+      pushToast({ variant: 'success', title: 'User updated' });
+    } catch (error: any) {
+      console.error('Failed to update user:', error);
+      pushToast({
+        variant: 'error',
+        title: 'Failed to update user',
+        message: error.response?.data?.detail || 'Please try again.',
+      });
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!resetPwUser) return;
+
+    const formData = new FormData(e.currentTarget);
+    const pw = (formData.get('new_password') as string) || '';
+    const pw2 = (formData.get('confirm_password') as string) || '';
+
+    if (pw.length < 6) {
+      pushToast({ variant: 'error', title: 'Password too short', message: 'Minimum 6 characters.' });
+      return;
+    }
+
+    if (pw !== pw2) {
+      pushToast({ variant: 'error', title: 'Passwords do not match' });
+      return;
+    }
+
+    const ok = window.confirm(`Reset password for ${resetPwUser.full_name || resetPwUser.username}?`);
+    if (!ok) return;
+
+    try {
+      await authAPI.adminResetPassword(resetPwUser.id, pw);
+      setResetPwUser(null);
+      pushToast({ variant: 'success', title: 'Password reset' });
+    } catch (error: any) {
+      console.error('Failed to reset password:', error);
+      pushToast({
+        variant: 'error',
+        title: 'Failed to reset password',
+        message: error.response?.data?.detail || 'Please try again.',
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -180,10 +253,11 @@ export default function Users() {
                   className="w-full border rounded-lg p-2"
                 >
                   <option value="">Select role...</option>
-                  <option value="admin">Admin (Full Access)</option>
-                  <option value="warehouse_staff">Warehouse Staff</option>
-                  <option value="production_staff">Production Staff</option>
-                  <option value="distribution_coordinator">Distribution Coordinator</option>
+                  <option value="admin">Admin (Full access)</option>
+                  <option value="warehouse_manager">Warehouse Manager (Inventory + fulfillment)</option>
+                  <option value="outreach_coordinator">Outreach Coordinator (Full access)</option>
+                  <option value="in_house_production_coordinator">In-House Production Coordinator</option>
+                  <option value="product_purchaser">Product Purchaser</option>
                 </select>
               </div>
             </div>
@@ -204,10 +278,11 @@ export default function Users() {
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="font-medium text-sm mb-2">Role Permissions:</h4>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li><strong>Admin:</strong> Full access to all features including user management</li>
-                <li><strong>Warehouse Staff:</strong> Manage inventory, purchases, and stock levels</li>
-                <li><strong>Production Staff:</strong> Record production activities</li>
-                <li><strong>Distribution Coordinator:</strong> Handle distributions and outgoing shipments</li>
+                <li><strong>Admin:</strong> Full access (including user management)</li>
+                <li><strong>Warehouse Manager:</strong> Inventory fulfillment and distribution</li>
+                <li><strong>Outreach Coordinator:</strong> Full access</li>
+                <li><strong>In-House Production Coordinator:</strong> Receive order, record production, move completed product to warehouse</li>
+                <li><strong>Product Purchaser:</strong> Receive order, record purchase in inventory including cost/pc</li>
               </ul>
             </div>
 
@@ -243,12 +318,13 @@ export default function Users() {
                 <th className="text-left p-4 font-semibold text-gray-700">Email</th>
                 <th className="text-left p-4 font-semibold text-gray-700">Role</th>
                 <th className="text-left p-4 font-semibold text-gray-700">Status</th>
+                <th className="text-right p-4 font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center p-8 text-gray-500">
+                  <td colSpan={5} className="text-center p-8 text-gray-500">
                     No users found.
                   </td>
                 </tr>
@@ -268,9 +344,27 @@ export default function Users() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                        {user.is_active ? 'Active' : 'Inactive'}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingUser(user)}
+                          className="text-[#5FA8A6] hover:text-[#52918F] px-3 py-1 rounded border"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setResetPwUser(user)}
+                          className="text-[#D9896C] hover:text-[#C77A5F] px-3 py-1 rounded border"
+                        >
+                          Reset Password
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -279,6 +373,152 @@ export default function Users() {
           </table>
         </div>
       </div>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-lg shadow-lg border">
+            <div className="p-4 border-b flex items-center justify-between">
+              <div>
+                <div className="text-lg font-semibold">Edit User</div>
+                <div className="text-sm text-gray-600">@{editingUser.username}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Full name</label>
+                <input
+                  type="text"
+                  name="full_name"
+                  defaultValue={editingUser.full_name || ''}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  defaultValue={editingUser.email}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Role</label>
+                <select name="role" defaultValue={editingUser.role} className="w-full border rounded-lg p-2">
+                  <option value="admin">Admin</option>
+                  <option value="warehouse_manager">Warehouse Manager</option>
+                  <option value="outreach_coordinator">Outreach Coordinator</option>
+                  <option value="in_house_production_coordinator">In-House Production Coordinator</option>
+                  <option value="product_purchaser">Product Purchaser</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input id="is_active" name="is_active" type="checkbox" defaultChecked={editingUser.is_active} />
+                <label htmlFor="is_active" className="text-sm">Active</label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[#5FA8A6] text-white px-4 py-2 rounded-lg hover:bg-[#52918F] font-medium"
+                >
+                  Save changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {resetPwUser && (
+        <div className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-lg shadow-lg border">
+            <div className="p-4 border-b flex items-center justify-between">
+              <div>
+                <div className="text-lg font-semibold">Reset Password</div>
+                <div className="text-sm text-gray-600">@{resetPwUser.username}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setResetPwUser(null)}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleResetPasswordSubmit} className="p-4 space-y-4">
+              <div className="text-sm text-gray-700">
+                This will immediately replace the user&apos;s password.
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">New password</label>
+                <input
+                  type="password"
+                  name="new_password"
+                  minLength={6}
+                  required
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Confirm new password</label>
+                <input
+                  type="password"
+                  name="confirm_password"
+                  minLength={6}
+                  required
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setResetPwUser(null)}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[#D9896C] text-white px-4 py-2 rounded-lg hover:bg-[#C77A5F] font-medium"
+                >
+                  Reset password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Activity Tracking Info */}
       <div className="mt-6 bg-white rounded-lg shadow p-6">

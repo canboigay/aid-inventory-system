@@ -12,9 +12,10 @@ from app.db.base import Base
 class UserRole(str, enum.Enum):
     """User roles for access control."""
     ADMIN = "admin"
-    WAREHOUSE_STAFF = "warehouse_staff"
-    PRODUCTION_STAFF = "production_staff"
-    DISTRIBUTION_COORDINATOR = "distribution_coordinator"
+    WAREHOUSE_MANAGER = "warehouse_manager"
+    OUTREACH_COORDINATOR = "outreach_coordinator"
+    IN_HOUSE_PRODUCTION_COORDINATOR = "in_house_production_coordinator"
+    PRODUCT_PURCHASER = "product_purchaser"
 
 
 class User(Base):
@@ -27,7 +28,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=True)
-    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.WAREHOUSE_STAFF)
+    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.WAREHOUSE_MANAGER)
     is_active = Column(Boolean, default=True, nullable=False)
     
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

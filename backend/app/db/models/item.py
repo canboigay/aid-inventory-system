@@ -16,6 +16,7 @@ class ItemCategory(str, enum.Enum):
     IN_HOUSE_PRODUCT = "in_house_product"
     PURCHASED_ITEM = "purchased_item"
     ASSEMBLED_KIT = "assembled_kit"
+    DONATED = "donated"
 
 
 class Category(Base):
@@ -49,6 +50,8 @@ class Item(Base):
     
     # Additional metadata
     sku = Column(String(100), unique=True, nullable=True, index=True)
+    # Cost per piece in Thai Baht (whole number)
+    unit_cost_thb = Column(Integer, nullable=True, index=True)
     notes = Column(Text, nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

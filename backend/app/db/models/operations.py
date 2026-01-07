@@ -54,11 +54,11 @@ class Assembly(Base):
 
 class DistributionType(str, enum.Enum):
     """Types of distributions."""
-    WEEKLY_PACKAGE = "weekly_package"
+    WEEKLY = "weekly"
+    BI_WEEKLY = "bi_weekly"
+    MONTHLY = "monthly"
+    BI_MONTHLY = "bi_monthly"
     CRISIS_AID = "crisis_aid"
-    SCHOOL_DELIVERY = "school_delivery"
-    BOARDING_HOME = "boarding_home"
-    LARGE_AID_DROP = "large_aid_drop"
     OTHER = "other"
 
 
@@ -81,4 +81,6 @@ class Distribution(Base):
     distributed_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     
     notes = Column(Text, nullable=True)
+    # Stores original legacy distribution type (e.g. school_delivery) when mapped to a new simplified type
+    distribution_type_legacy = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

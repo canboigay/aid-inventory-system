@@ -9,6 +9,7 @@ import type {
   QuickPurchaseEntry,
   QuickDistributionEntry,
   DashboardStats,
+  Recipient,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -66,6 +67,18 @@ export const authAPI = {
     return response.data;
   },
 
+  updateUser: async (userId: string, data: { email?: string; full_name?: string; role?: string; is_active?: boolean }): Promise<User> => {
+    const response = await apiClient.patch<User>(`/auth/users/${userId}`, data);
+    return response.data;
+  },
+
+  adminResetPassword: async (userId: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>(`/auth/users/${userId}/reset-password`, {
+      new_password: newPassword,
+    });
+    return response.data;
+  },
+
   changePassword: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>('/auth/change-password', {
       current_password: currentPassword,
@@ -113,6 +126,17 @@ export const itemsAPI = {
 };
 
 // Quick Entry API (for dashboard)
+// Recipients API
+export const recipientsAPI = {
+  list: async (q?: string): Promise<Recipient[]> => {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    const response = await apiClient.get<Recipient[]>(`/recipients${suffix}`);
+    return response.data;
+  },
+};
+
 export const quickEntryAPI = {
   production: async (data: QuickProductionEntry): Promise<void> => {
     await apiClient.post('/quick/production', data);

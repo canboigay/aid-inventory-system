@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
 from app.db.session import get_db
-from app.db.models.user import User, RefreshToken
-from app.schemas.user import LoginRequest, Token, UserResponse, UserCreate, ChangePasswordRequest
+from app.db.models.user import User, RefreshToken, UserRole
+from app.schemas.user import LoginRequest, Token, UserResponse, UserCreate, ChangePasswordRequest, AdminUserUpdate, AdminResetPasswordRequest
 from app.core.security import verify_password, create_access_token, create_refresh_token, decode_token, get_password_hash
 from app.api.deps import get_current_active_user
 
@@ -110,15 +110,66 @@ def list_users(
     current_user: User = Depends(get_current_active_user)
 ):
     """List all users (admin only)."""
-    # Check if current user is admin
-    if current_user.role != 'admin':
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators can list users"
-        )
-    
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only administrators can list users")
+
     users = db.query(User).order_by(User.created_at.desc()).all()
     return users
+
+
+@router.patch("/users/{user_id}", response_model=UserResponse)
+def admin_update_user(
+    user_id: str,
+    body: AdminUserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Admin can update a user's email/full_name/role/is_active."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only administrators can update users")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if body.email is not None:
+        existing = db.query(User).filter(User.email == body.email, User.id != user_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        user.email = body.email
+
+    if body.full_name is not None:
+        user.full_name = body.full_name
+
+    if body.role is not None:
+        user.role = body.role
+
+    if body.is_active is not None:
+        user.is_active = body.is_active
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/users/{user_id}/reset-password")
+def admin_reset_password(
+    user_id: str,
+    body: AdminResetPasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Admin resets a user's password."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only administrators can reset passwords")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.password_hash = get_password_hash(body.new_password)
+    db.commit()
+    return {"message": "Password reset successfully"}
 
 
 @router.post("/change-password")

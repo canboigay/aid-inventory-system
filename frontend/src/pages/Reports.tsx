@@ -27,7 +27,8 @@ export default function Reports() {
       setReport(data);
     } catch (error) {
       console.error('Failed to load report:', error);
-      alert('Failed to load report data');
+      // Keep non-blocking: avoid double popups.
+      console.warn('Report load failed');
     } finally {
       setLoading(false);
     }
@@ -35,11 +36,11 @@ export default function Reports() {
 
   const handleCustomDateRange = () => {
     if (!startDate || !endDate) {
-      alert('Please select both start and end dates');
+      console.warn('Please select both start and end dates');
       return;
     }
     if (new Date(startDate) > new Date(endDate)) {
-      alert('Start date must be before end date');
+      console.warn('Start date must be before end date');
       return;
     }
     setPeriod('custom');
@@ -65,16 +66,19 @@ export default function Reports() {
     });
   };
 
-  const getDistributionTypeLabel = (type: string) => {
+  const getDistributionTypeLabel = (type: string, legacy?: string) => {
     const labels: Record<string, string> = {
-      weekly_package: 'Weekly Package',
+      weekly: 'Weekly',
+      bi_weekly: 'Bi-weekly',
+      monthly: 'Monthly',
+      bi_monthly: 'Bi-monthly',
       crisis_aid: 'Crisis Aid',
-      school_delivery: 'School Delivery',
-      boarding_home: 'Boarding Home',
-      large_aid_drop: 'Large Aid Drop',
       other: 'Other'
     };
-    return labels[type] || type;
+
+    const base = labels[type] || type;
+    // If this row was migrated from an old type (e.g. school delivery), show it for transparency.
+    return legacy ? `${base} (was: ${legacy.toLowerCase().replace(/_/g, ' ')})` : base;
   };
 
   if (loading) {
@@ -144,7 +148,7 @@ export default function Reports() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              📅 Custom Range
+              Custom Range
             </button>
           </div>
         </div>
@@ -383,7 +387,7 @@ export default function Reports() {
                   <div key={dist.id} className="border rounded-lg p-4 hover:bg-gray-50">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <div className="font-semibold text-lg">{getDistributionTypeLabel(dist.distribution_type)}</div>
+                        <div className="font-semibold text-lg">{getDistributionTypeLabel(dist.distribution_type, (dist as any).distribution_type_legacy)}</div>
                         <div className="text-sm font-medium text-gray-700 mt-1">📅 {formatDate(dist.date)}</div>
                       </div>
                       <div className="text-sm text-gray-600">👤 {dist.user_name}</div>

@@ -1,9 +1,10 @@
 // User and Auth Types
 export enum UserRole {
   ADMIN = "admin",
-  WAREHOUSE_STAFF = "warehouse_staff",
-  PRODUCTION_STAFF = "production_staff",
-  DISTRIBUTION_COORDINATOR = "distribution_coordinator",
+  WAREHOUSE_MANAGER = "warehouse_manager",
+  OUTREACH_COORDINATOR = "outreach_coordinator",
+  IN_HOUSE_PRODUCTION_COORDINATOR = "in_house_production_coordinator",
+  PRODUCT_PURCHASER = "product_purchaser",
 }
 
 export interface User {
@@ -29,12 +30,23 @@ export interface TokenResponse {
   token_type: string;
 }
 
+// Recipients
+export interface Recipient {
+  id: string;
+  name: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Item Types
 export enum ItemCategory {
   RAW_MATERIAL = "raw_material",
   IN_HOUSE_PRODUCT = "in_house_product",
   PURCHASED_ITEM = "purchased_item",
   ASSEMBLED_KIT = "assembled_kit",
+  DONATED = "donated",
 }
 
 export interface Item {
@@ -46,6 +58,7 @@ export interface Item {
   current_stock_level: number;
   minimum_stock_level?: number;
   sku?: string;
+  unit_cost_thb?: number;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -58,6 +71,7 @@ export interface ItemCreate {
   unit_of_measure: string;
   minimum_stock_level?: number;
   sku?: string;
+  unit_cost_thb?: number;
   notes?: string;
 }
 
@@ -83,11 +97,11 @@ export interface QuickPurchaseEntry {
 }
 
 export enum DistributionType {
-  WEEKLY_PACKAGE = "weekly_package",
+  WEEKLY = "weekly",
+  BI_WEEKLY = "bi_weekly",
+  MONTHLY = "monthly",
+  BI_MONTHLY = "bi_monthly",
   CRISIS_AID = "crisis_aid",
-  SCHOOL_DELIVERY = "school_delivery",
-  BOARDING_HOME = "boarding_home",
-  LARGE_AID_DROP = "large_aid_drop",
   OTHER = "other",
 }
 
@@ -169,6 +183,7 @@ export interface DistributionSummary {
   id: string;
   date: string;
   distribution_type: string;
+  distribution_type_legacy?: string;
   items: any[];
   recipient_info?: string;
   user_name: string;

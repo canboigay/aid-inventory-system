@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { itemsAPI, quickEntryAPI } from '../api/client';
+import { itemsAPI, quickEntryAPI, recipientsAPI } from '../api/client';
+import { useToast } from '../components/ToastProvider';
 import type { Item, ItemCategory } from '../types';
 
 export default function Inventory() {
+  const { pushToast } = useToast();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -11,6 +13,7 @@ export default function Inventory() {
   const [distributeItem, setDistributeItem] = useState<Item | null>(null);
   const [filterCategory, setFilterCategory] = useState<ItemCategory | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [recipients, setRecipients] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     loadItems();
@@ -18,8 +21,12 @@ export default function Inventory() {
 
   const loadItems = async () => {
     try {
-      const data = await itemsAPI.list();
-      setItems(data);
+      const [itemsData, recipientsData] = await Promise.all([
+        itemsAPI.list(),
+        recipientsAPI.list(),
+      ]);
+      setItems(itemsData);
+      setRecipients(recipientsData.map(r => ({ id: r.id, name: r.name })));
     } catch (error) {
       console.error('Failed to load items:', error);
     } finally {
@@ -41,24 +48,43 @@ export default function Inventory() {
         ? Number(formData.get('minimum_stock_level')) 
         : undefined,
       sku: formData.get('sku') as string || undefined,
+      unit_cost_thb: formData.get('unit_cost_thb') ? Number(formData.get('unit_cost_thb')) : undefined,
       notes: formData.get('notes') as string || undefined,
     };
 
     try {
       if (editingItem) {
         await itemsAPI.update(editingItem.id, itemData);
-        alert('Item updated successfully! ✓');
+        pushToast({ variant: 'success', title: 'Item updated', message: editingItem.name });
       } else {
         await itemsAPI.create(itemData);
-        alert('Item saved successfully! ✓');
+        pushToast({ variant: 'success', title: 'Item created', message: itemData.name });
       }
       setShowForm(false);
       setEditingItem(null);
-      loadItems();
       e.currentTarget.reset();
+
+      // Refresh list; if refresh fails, do not show a second blocking "failed" popup.
+      try {
+        await loadItems();
+      } catch (err) {
+        console.error('Post-save refresh failed:', err);
+        pushToast({ variant: 'info', title: 'Saved, but refresh failed', message: 'Please reload the page.' });
+      }
     } catch (error: any) {
       console.error('Failed to save item:', error);
-      alert(error.response?.data?.detail || 'Failed to save item. Please try again.');
+      pushToast({
+        variant: 'error',
+        title: 'Save failed',
+        message: error.response?.data?.detail || 'Please try again.'
+      });
+
+      // In case the request actually succeeded server-side (e.g., network timeout), attempt a refresh.
+      try {
+        await loadItems();
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -95,10 +121,10 @@ export default function Inventory() {
       await itemsAPI.adjust(addItem.id, qty, notes);
       setAddItem(null);
       await loadItems();
-      alert(`✓ Successfully added ${qty} to ${addItem.name}`);
+      pushToast({ variant: 'success', title: 'Stock added', message: `${qty} added to ${addItem.name}` });
     } catch (err: any) {
       console.error('Add stock error:', err);
-      alert(err.response?.data?.detail || 'Failed to add stock');
+      pushToast({ variant: 'error', title: 'Add stock failed', message: err.response?.data?.detail || 'Please try again.' });
     }
   };
 
@@ -108,22 +134,33 @@ export default function Inventory() {
     const formData = new FormData(e.currentTarget);
     const qty = Number(formData.get('dist_qty'));
     const dtype = formData.get('dist_type') as any;
-    const recipient = (formData.get('recipient') as string) || undefined;
+
+    const recipientId = (formData.get('recipient_id') as string) || '';
+    const recipientFreeText = (formData.get('recipient') as string) || '';
+    const selectedRecipientName = recipientId
+      ? recipients.find(r => r.id === recipientId)?.name
+      : undefined;
+
+    const recipient = recipientFreeText.trim() || selectedRecipientName;
     const notes = (formData.get('dist_notes') as string) || undefined;
     if (!distributeItem) return;
     try {
       await quickEntryAPI.distribution({
         distribution_type: dtype,
         items: [{ item_id: distributeItem.id, quantity: qty }],
-        recipient_info: recipient,
+        recipient_info: recipient || undefined,
         notes,
       });
       setDistributeItem(null);
       await loadItems();
-      alert(`✓ Successfully distributed ${qty} ${distributeItem.unit_of_measure} of ${distributeItem.name}`);
+      pushToast({
+        variant: 'success',
+        title: 'Distribution recorded',
+        message: `${qty} ${distributeItem.unit_of_measure} of ${distributeItem.name}`
+      });
     } catch (err: any) {
       console.error('Distribution error:', err);
-      alert(err.response?.data?.detail || 'Failed to distribute');
+      pushToast({ variant: 'error', title: 'Distribution failed', message: err.response?.data?.detail || 'Please try again.' });
     }
   };
 
@@ -140,6 +177,7 @@ export default function Inventory() {
       in_house_product: 'In-House Product',
       purchased_item: 'Purchased Item',
       assembled_kit: 'Assembled Kit',
+      donated: 'Donated',
     };
     return labels[category];
   };
@@ -150,6 +188,7 @@ export default function Inventory() {
       in_house_product: 'bg-[#A8B968]/20 text-[#A8B968]',
       purchased_item: 'bg-[#D9896C]/20 text-[#D9896C]',
       assembled_kit: 'bg-[#5FA8A6]/20 text-[#5FA8A6]',
+      donated: 'bg-purple-100 text-purple-800',
     };
     return colors[category];
   };
@@ -212,6 +251,7 @@ export default function Inventory() {
               <option value="in_house_product">In-House Product</option>
               <option value="purchased_item">Purchased Item</option>
               <option value="assembled_kit">Assembled Kit</option>
+              <option value="donated">Donated</option>
             </select>
           </div>
         </div>
@@ -249,6 +289,7 @@ export default function Inventory() {
                   <option value="in_house_product">In-House Product</option>
                   <option value="purchased_item">Purchased Item</option>
                   <option value="assembled_kit">Assembled Kit</option>
+                  <option value="donated">Donated</option>
                 </select>
               </div>
             </div>
@@ -301,7 +342,7 @@ export default function Inventory() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">SKU (Stock Keeping Unit)</label>
                 <input
@@ -310,6 +351,19 @@ export default function Inventory() {
                   defaultValue={editingItem?.sku}
                   className="w-full border rounded-lg p-2"
                   placeholder="Optional unique identifier"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">฿/pc</label>
+                <input
+                  type="number"
+                  name="unit_cost_thb"
+                  min="0"
+                  step="1"
+                  inputMode="numeric"
+                  defaultValue={editingItem?.unit_cost_thb}
+                  className="w-full border rounded-lg p-2"
+                  placeholder="Thai Baht per piece"
                 />
               </div>
               <div>
@@ -353,6 +407,7 @@ export default function Inventory() {
                 <th className="text-left p-4 font-semibold text-gray-700">Category</th>
                 <th className="text-left p-4 font-semibold text-gray-700">Stock Level</th>
                 <th className="text-left p-4 font-semibold text-gray-700">Unit</th>
+                <th className="text-left p-4 font-semibold text-gray-700">฿/pc</th>
                 <th className="text-left p-4 font-semibold text-gray-700">Min. Stock</th>
                 <th className="text-right p-4 font-semibold text-gray-700">Actions</th>
               </tr>
@@ -360,7 +415,7 @@ export default function Inventory() {
             <tbody>
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center p-8 text-gray-500">
+                  <td colSpan={7} className="text-center p-8 text-gray-500">
                     {searchTerm || filterCategory !== 'all' 
                       ? 'No items match your filters'
                       : 'No items yet. Click "Add New Item" to get started.'}
@@ -398,6 +453,7 @@ export default function Inventory() {
                         )}
                       </td>
                       <td className="p-4 text-gray-600">{item.unit_of_measure}</td>
+                      <td className="p-4 text-gray-600">{typeof item.unit_cost_thb === 'number' ? item.unit_cost_thb : '—'}</td>
                       <td className="p-4 text-gray-600">
                         {item.minimum_stock_level ? formatStock(item.minimum_stock_level) : '—'}
                       </td>
@@ -487,18 +543,24 @@ export default function Inventory() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Type</label>
                   <select name="dist_type" className="w-full border rounded-lg p-2" required>
-                    <option value="weekly_package">Weekly Package</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="bi_weekly">Bi-weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="bi_monthly">Bi-monthly</option>
                     <option value="crisis_aid">Crisis Aid</option>
-                    <option value="school_delivery">School Delivery</option>
-                    <option value="boarding_home">Boarding Home</option>
-                    <option value="large_aid_drop">Large Aid Drop</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Recipient (optional)</label>
-                <input name="recipient" type="text" className="w-full border rounded-lg p-2" />
+                <select name="recipient_id" className="w-full border rounded-lg p-2">
+                  <option value="">Select recipient...</option>
+                  {recipients.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+                <input name="recipient" type="text" placeholder="Or type a new recipient..." className="w-full border rounded-lg p-2 mt-2" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Notes (optional)</label>

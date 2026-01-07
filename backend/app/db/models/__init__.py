@@ -4,6 +4,7 @@ from app.db.models.item import Item, ItemCategory, Category
 from app.db.models.stock_movement import StockMovement, MovementType, ReferenceType
 from app.db.models.production import Production
 from app.db.models.operations import Purchase, Assembly, Distribution, DistributionType
+from app.db.models.recipient import Recipient
 
 __all__ = [
     "User",
@@ -20,4 +21,5 @@ __all__ = [
     "Assembly",
     "Distribution",
     "DistributionType",
+    "Recipient",
 ]

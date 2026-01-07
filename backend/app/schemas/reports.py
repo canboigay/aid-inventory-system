@@ -53,6 +53,7 @@ class DistributionSummary(BaseModel):
     id: str
     date: datetime
     distribution_type: str
+    distribution_type_legacy: Optional[str] = None
     items: List[dict]
     recipient_info: Optional[str] = None
     user_name: str

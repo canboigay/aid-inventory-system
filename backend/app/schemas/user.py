@@ -1,5 +1,5 @@
 """User and authentication schemas."""
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 import uuid
@@ -26,6 +26,19 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
+
+
+class AdminUserUpdate(BaseModel):
+    """Admin-only user updates."""
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
+
+class AdminResetPasswordRequest(BaseModel):
+    """Admin resets a user's password."""
+    new_password: str = Field(min_length=6)
 
 
 class UserInDB(UserBase):

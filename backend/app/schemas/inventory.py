@@ -18,6 +18,7 @@ class ItemBase(BaseModel):
     unit_of_measure: str
     minimum_stock_level: Optional[Decimal] = None
     sku: Optional[str] = None
+    unit_cost_thb: Optional[int] = Field(default=None, ge=0, description="Thai Baht per piece (whole number)")
     notes: Optional[str] = None
 
 
@@ -34,6 +35,7 @@ class ItemUpdate(BaseModel):
     unit_of_measure: Optional[str] = None
     minimum_stock_level: Optional[Decimal] = None
     sku: Optional[str] = None
+    unit_cost_thb: Optional[int] = Field(default=None, ge=0)
     notes: Optional[str] = None
 
 

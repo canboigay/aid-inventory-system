@@ -8,6 +8,7 @@ import Users from './pages/Users';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { authAPI } from './api/client';
+import { ToastProvider } from './components/ToastProvider';
 import type { User } from './types';
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -37,8 +38,9 @@ function Layout({ children }: { children: React.ReactNode }) {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
+    <ToastProvider>
+      <div className="min-h-screen bg-gray-100">
+        <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex justify-between items-center">
             {/* Logo & Desktop Nav */}
@@ -157,8 +159,9 @@ function Layout({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </nav>
-      <main className="pb-6">{children}</main>
-    </div>
+        <main className="pb-6">{children}</main>
+      </div>
+    </ToastProvider>
   );
 }
 
